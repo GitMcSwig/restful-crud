@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 import com.galvanize.models.Room;
 import com.galvanize.repositories.RoomsRepository;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,6 +33,12 @@ public class RoomsController {
         newRoom.setHavingVc(room.isHavingVc());
         roomsRepository.save(newRoom);
         return newRoom;
+    }
+
+    @RequestMapping(value = "/rooms", method = GET)
+    public List<Room> getRooms() {
+
+        return roomsRepository.findAll();
     }
 
     @ExceptionHandler
