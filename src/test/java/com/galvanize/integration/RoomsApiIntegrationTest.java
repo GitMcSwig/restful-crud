@@ -31,6 +31,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -45,15 +46,16 @@ public class RoomsApiIntegrationTest {
     @Autowired
     RoomsRepository roomsRepository;
 
+    private String BASE_URL;
 
     @Before
     public void setup() {
+        BASE_URL = "http://localhost:"+port+"/rooms/";
         roomsRepository.deleteAll();
     }
 
     @Test
     public void postRespondsWithStatusCodeCreated() {
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
 
         Room room = new Room();
         room.setName("Ruby");
@@ -67,7 +69,6 @@ public class RoomsApiIntegrationTest {
 
     @Test
     public void postRespondsWithCreatedRoom() {
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
 
         Room room = new Room();
         room.setName("Ruby");
@@ -87,7 +88,6 @@ public class RoomsApiIntegrationTest {
 
     @Test
     public void addsTheInstanceToTheDatabase() {
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
 
         Room room = new Room();
         room.setName("Ruby");
@@ -101,7 +101,6 @@ public class RoomsApiIntegrationTest {
 
     @Test
     public void postRespondsWithStatusCodeUnprocessableEntityForRoomWithEmptyName() {
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
 
         Room room = new Room();
         room.setName("");
@@ -116,7 +115,6 @@ public class RoomsApiIntegrationTest {
 
     @Test
     public void postRespondsWithDetailsOfValidationError() throws Exception {
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
 
         Room room = new Room();
         room.setName("");
@@ -150,10 +148,7 @@ public class RoomsApiIntegrationTest {
         roomsRepository.save(room1);
         roomsRepository.save(room2);
 
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
-
         ResponseEntity<List> response = restTemplate.getForEntity(BASE_URL, List.class);
-
 
         assertThat(response.getStatusCode(), equalTo(OK));
         assertThat(response.getBody().size(), equalTo(2));
@@ -163,13 +158,36 @@ public class RoomsApiIntegrationTest {
     public void getRoomsRespondsWithAnEmptyListOfRoomsWithStatus200OK() throws Exception {
         roomsRepository.deleteAll();
 
-
-        String BASE_URL = "http://localhost:"+port+"/rooms/";
-
         ResponseEntity<List> response = restTemplate.getForEntity(BASE_URL, List.class);
-
 
         assertThat(response.getStatusCode(), equalTo(OK));
         assertThat(response.getBody().size(), equalTo(0));
     }
+
+    @Test
+    public void getRoomRespondsWithRoomAndStatus200OKIfRoomExists() throws Exception {
+        Room room1 = new Room();
+        room1.setName("Test");
+        room1.setCapacity(12);
+        room1.setHavingVc(true);
+
+        Room savedRoom = roomsRepository.save(room1);
+
+
+        ResponseEntity<Room> response = restTemplate.getForEntity(BASE_URL + savedRoom.getId(), Room.class, String.class);
+
+        assertThat(response.getStatusCode(), equalTo(OK));
+        assertThat(response.getBody().getId(), equalTo(savedRoom.getId()));
+        assertThat(response.getBody().getName(), equalTo(room1.getName()));
+    }
+
+    @Test
+    public void getRoomRespondsWithRoomAndStatus404NotFoundIfRoomDoesNotExist() throws Exception {
+        roomsRepository.deleteAll();
+
+
+        ResponseEntity<Room> response = restTemplate.getForEntity(BASE_URL+ "XCVGG", Room.class, String.class);
+        assertThat(response.getStatusCode(), equalTo(NOT_FOUND));
+    }
+
 }
