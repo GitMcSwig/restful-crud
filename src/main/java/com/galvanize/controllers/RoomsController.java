@@ -1,12 +1,11 @@
 package com.galvanize.controllers;
 
 import static java.util.stream.Collectors.toList;
-import static org.springframework.http.HttpStatus.CREATED;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 import com.galvanize.models.Room;
 import com.galvanize.repositories.RoomsRepository;
@@ -48,7 +47,6 @@ public class RoomsController {
 
     @RequestMapping(value = "/rooms", method = GET)
     public List<Room> getRooms() {
-
         return roomsRepository.findAll();
     }
 
@@ -61,8 +59,17 @@ public class RoomsController {
         else {
             throw new RoomNotFoundException();
         }
+    }
 
-
+    @RequestMapping(value = "/rooms/{id}", method =  PUT)
+    @ResponseStatus(NO_CONTENT)
+    public void putRoom(@PathVariable("id") String id, @Valid @RequestBody Room room) {
+        Room newRoom = new Room();
+        newRoom.setId(room.getId());
+        newRoom.setName(room.getName());
+        newRoom.setCapacity(room.getCapacity());
+        newRoom.setHavingVc(room.isHavingVc());
+        roomsRepository.save(newRoom);
     }
 
     @ExceptionHandler

@@ -14,12 +14,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -188,6 +192,60 @@ public class RoomsApiIntegrationTest {
 
         ResponseEntity<Room> response = restTemplate.getForEntity(BASE_URL+ "XCVGG", Room.class, String.class);
         assertThat(response.getStatusCode(), equalTo(NOT_FOUND));
+    }
+
+    @Test
+    public void putRoomsUpdatesTheRoomAndRespondsWith204IfEntityHasBeenUpdated() throws Exception {
+        roomsRepository.deleteAll();
+
+        Room room1 = new Room();
+        room1.setName("Update");
+        room1.setCapacity(12);
+        room1.setHavingVc(false);
+
+        Room saved = roomsRepository.save(room1);
+        saved.setHavingVc(true);
+
+        URI uri = new URI(BASE_URL + saved.getId());
+        HttpEntity<Room> roomHttpEntity = new HttpEntity<Room>(saved);
+
+        ResponseEntity<Room> responseEntity = restTemplate.exchange(uri, HttpMethod.PUT, roomHttpEntity, Room.class);
+
+        assertThat(responseEntity.getStatusCode(), equalTo(NO_CONTENT));
+        assertThat(responseEntity.getBody(), equalTo(null));
+
+        Room updated = roomsRepository.findOne(saved.getId());
+        assertThat(updated.isHavingVc(), equalTo(true));
+    }
+
+    @Test
+    public void putRoomsDoesNotUpdateAnInvalidRoomAndRespondsWith422() throws Exception {
+        roomsRepository.deleteAll();
+
+        Room room1 = new Room();
+        room1.setId("CRAP");
+        room1.setName("");
+        room1.setCapacity(12);
+        room1.setHavingVc(false);
+
+
+        URI uri = new URI(BASE_URL + "CRAP");
+        HttpEntity<Room> roomHttpEntity = new HttpEntity<Room>(room1);
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.PUT, roomHttpEntity, String.class);
+
+        assertThat(responseEntity.getStatusCode(), equalTo(UNPROCESSABLE_ENTITY));
+
+        List<Room> rooms = roomsRepository.findAll();
+        assertThat(rooms.size(), equalTo(0));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> error = objectMapper.readValue(responseEntity.getBody(),
+                new TypeReference<Map<String, Object>>() {});
+
+        assertThat(error.get("reason"), equalTo("Unprocessable Entity"));
+        assertThat(error.get("errors"), equalTo(singletonList("Name must not be empty!")));
+
     }
 
 }
