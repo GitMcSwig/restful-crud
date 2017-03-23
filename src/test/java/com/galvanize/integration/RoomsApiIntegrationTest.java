@@ -2,7 +2,7 @@ package com.galvanize.integration;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.galvanize.Application;
+
 import com.galvanize.models.Room;
 import com.galvanize.repositories.RoomsRepository;
 import org.junit.Before;
@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+
 import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -18,15 +18,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.web.client.RestTemplate;
+
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
@@ -245,6 +242,42 @@ public class RoomsApiIntegrationTest {
 
         assertThat(error.get("reason"), equalTo("Unprocessable Entity"));
         assertThat(error.get("errors"), equalTo(singletonList("Name must not be empty!")));
+
+    }
+
+    @Test
+    public void deleteRoomDeletesRoomWithProvidedIdAndReturns204AndNoBody() throws Exception {
+        roomsRepository.deleteAll();
+
+        Room room1 = new Room();
+        room1.setName("Update");
+        room1.setCapacity(12);
+        room1.setHavingVc(false);
+
+        Room saved = roomsRepository.save(room1);
+
+        URI uri = new URI(BASE_URL + saved.getId());
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.DELETE, null, String.class);
+
+        assertThat(responseEntity.getStatusCode(), equalTo(NO_CONTENT));
+        assertThat(responseEntity.getBody(), equalTo(null));
+
+        List<Room> rooms = roomsRepository.findAll();
+        assertThat(rooms.size(), equalTo(0));
+
+    }
+
+    @Test
+    public void deleteRoomReturns204AndNoBodyIfRoomDoesNotExist() throws Exception {
+        roomsRepository.deleteAll();
+
+        URI uri = new URI(BASE_URL + "XXXX");
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.DELETE, null, String.class);
+
+        assertThat(responseEntity.getStatusCode(), equalTo(NO_CONTENT));
+        assertThat(responseEntity.getBody(), equalTo(null));
 
     }
 

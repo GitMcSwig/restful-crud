@@ -3,9 +3,7 @@ package com.galvanize.controllers;
 import static java.util.stream.Collectors.toList;
 
 import static org.springframework.http.HttpStatus.*;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.PUT;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 import com.galvanize.models.Room;
 import com.galvanize.repositories.RoomsRepository;
@@ -70,6 +68,12 @@ public class RoomsController {
         newRoom.setCapacity(room.getCapacity());
         newRoom.setHavingVc(room.isHavingVc());
         roomsRepository.save(newRoom);
+    }
+
+    @RequestMapping(value = "/rooms/{id}", method =  DELETE)
+    @ResponseStatus(NO_CONTENT)
+    public void putRoom(@PathVariable("id") String id) {
+        roomsRepository.delete(id);
     }
 
     @ExceptionHandler
