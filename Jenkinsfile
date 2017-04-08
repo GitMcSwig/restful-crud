@@ -1,9 +1,10 @@
 pipeline {
-    agent { docker 'gradle:3.4.1' }
+    agent { docker 'mongodb:3.4.2' }
     stages {
         stage('build') {
             steps {
-                sh 'gradle clean build'
+                sh 'mongod --dbpath .'
+                sh './gradlew clean build'
             }
         }
     }
