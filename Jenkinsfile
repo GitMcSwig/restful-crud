@@ -1,9 +1,9 @@
 pipeline {
-    agent { docker 'maven:3.3.3' }
+    agent { docker 'gradle:3.4.1' }
     stages {
         stage('build') {
             steps {
-                sh 'mvn --version'
+                sh 'gradle clean'
             }
         }
     }
