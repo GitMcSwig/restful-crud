@@ -1,5 +1,5 @@
 pipeline {
-    agent { docker 'mongo' }
+    agent { docker 'ubuntu' }
     stages {
         stage('build') {
             steps {
