@@ -1,5 +1,5 @@
 pipeline {
-    agent { docker 'mongodb:3.4.2' }
+    agent { docker 'mongo' }
     stages {
         stage('build') {
             steps {
